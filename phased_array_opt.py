@@ -7,11 +7,12 @@ Created on Wed Apr 11 20:18:45 2018
 
 import numpy as np
 from scipy import optimize
+from pyswarm import pso
 import matplotlib.pyplot as plt
 
 N=8
 THETA0=0
-THETA_P=[18,31]
+THETA_P=[21]
 
 THETA_G = THETA0
 gamma = 0.5
@@ -36,17 +37,23 @@ def target_func(AB, THETA_G=0, THETA_P=18, sign=1.0):
     ECP = np.vectorize(EC)(THETA_P)
     ESP = np.vectorize(ES)(THETA_P)
     EMP = np.sqrt(ECP**2 + ESP**2)
-    GP = np.sum(np.abs(EMG) / np.abs(EMP))
+    GP = EMG+np.sum(np.abs(EMG) / np.abs(EMP))
     return sign*GP
 
 # optimization
+"""
 res = optimize.minimize(target_func, 0.5*np.ones(2*N), \
                         args=(THETA_G,THETA_P,-1.0), \
                         bounds=[(0,1)]*(2*N))
+fopt = res.fun
+xopt = res.x
+"""
+xopt, fopt = pso(target_func, np.zeros(2*N), np.ones(2*N), args=(THETA_G,THETA_P,-1.0))
+
 # optimization results
-GP = -res.fun
+GP = -fopt
 GPD = 10*np.log10(GP)
-A,B = np.split(res.x, 2)
+A,B = np.split(xopt, 2)
 
 # optimized radiation pattern
 def EM(THETA):
