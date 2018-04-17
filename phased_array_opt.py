@@ -10,7 +10,7 @@ from scipy import optimize
 from pyswarm import pso
 import matplotlib.pyplot as plt
 
-N=8
+N=20
 THETA0=0
 THETA_P=[21]
 
@@ -41,14 +41,14 @@ def target_func(AB, THETA_G=0, THETA_P=18, sign=1.0):
     return sign*GP
 
 # optimization
-"""
+
 res = optimize.minimize(target_func, 0.5*np.ones(2*N), \
                         args=(THETA_G,THETA_P,-1.0), \
                         bounds=[(0,1)]*(2*N))
 fopt = res.fun
 xopt = res.x
-"""
-xopt, fopt = pso(target_func, np.zeros(2*N), np.ones(2*N), args=(THETA_G,THETA_P,-1.0))
+
+#xopt, fopt = pso(target_func, np.zeros(2*N), np.ones(2*N), args=(THETA_G,THETA_P,-1.0))
 
 # optimization results
 GP = -fopt
@@ -76,8 +76,11 @@ ax1.set_xticks(np.arange(-90, 90+1, 10))
 ax1.set_ylim(0, ymax)
 ax1.set_xlabel(r'$\Theta$')
 ax1.set_ylabel(r'$E(\Theta)$')
+ax1.grid()
 ax2.plot(THETA_vec, EM_vec)
 ax2.set_xticks(np.arange(-90, 90+1, 10))
 ax2.set_ylim(0, ymax)
 ax2.set_xlabel(r'$\Theta$')
 ax2.set_ylabel(r'$EM(\Theta)$')
+ax2.grid()
+
