@@ -9,6 +9,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy import optimize
 from pyswarm import pso
+import time
 
 q = np.pi / 180
 THETA_vec = np.arange(-90, 90, 0.01)
@@ -30,7 +31,7 @@ def NUSLA_SLR_opt(N=10, BW=20, FN_tolerance = 0.1):
     theta_SLL = np.append(np.arange(-90, -FN, 0.5), np.arange(FN, 90, 0.5))
     
     def errfun(dd):
-        d_opt = d + dd
+        d_opt = d + np.append([0], dd)
         E_SLL = np.vectorize(lambda THETA:E_nusla(THETA, 0, d_opt))(theta_SLL)
         errSLL = np.max(E_SLL)
         # adjust number after less sign to change priority of BW over SLL
@@ -39,9 +40,9 @@ def NUSLA_SLR_opt(N=10, BW=20, FN_tolerance = 0.1):
         else:
             errBW = 20
         return errSLL + errBW
-    
-    xopt, fopt = pso(errfun, [-0.2]*N, [0.2]*N, swarmsize=200, maxiter=300)
-    return (d, d + xopt)
+    consfun = lambda x: np.ediff1d(d + np.append([0],x))
+    xopt, fopt = pso(errfun, [-1]*(N-1), [1]*(N-1), swarmsize=500, maxiter=1000, f_ieqcons=consfun)
+    return (d, d + np.append([0], xopt))
 
 def plot_results(THETA0, d, dopt):
     Ev = np.vectorize(lambda THETA:E_nusla(THETA, THETA0, d))(THETA_vec)
@@ -81,7 +82,10 @@ def plot_results(THETA0, d, dopt):
     ax4.set_xticks(np.arange(-90, 90+1, 10)*q)
     ax4.set_ylim(-50,0)
 
-d, d_opt = NUSLA_SLR_opt(20, 50, 0.2)
+start = time.time()
+d, d_opt = NUSLA_SLR_opt(10, 40, 0.5)
+stop = time.time()
+print(stop-start)
 THETA0 = 0
 plot_results(THETA0, d, d_opt)
     
