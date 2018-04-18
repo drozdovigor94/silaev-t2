@@ -11,46 +11,42 @@ from scipy import optimize
 from pyswarm import pso
 
 q = np.pi / 180
+THETA_vec = np.arange(-90, 90, 0.01)
 
-def NUSLA_SLR_opt(N=10, THETA0=0, BW=20, FN_tolerance = 0.1):
-    
-    def E_nusla(THETA, d):
-        return np.abs(np.sum(np.exp(1j*2*np.pi*d*(np.sin(q*THETA) - np.sin(q*THETA0)))))
-    
+def E_nusla(THETA, THETA0, d):
+    return np.abs(np.sum(np.exp(1j*2*np.pi*d*(np.sin(q*THETA) - np.sin(q*THETA0)))))
+
+def NUSLA_SLR_opt(N=10, BW=20, FN_tolerance = 0.1):
     '''N = 10
     THETA0 = 0
     BW = 20'''
-    THETA_vec = np.arange(-90, 90, 0.01)
+
     b = 1/(N*np.sin(q*(BW/2)))
     
     d = np.arange(N)*b
     #BW = np.abs(np.arccos(-1/(N*b)) - np.arccos(1/(N*b)))/q
-    FNL = THETA0 - BW/2
-    FNR = THETA0 + BW/2
+    FN = BW/2
     
-    theta_SLL = np.append(np.arange(-90, FNL, 0.5), np.arange(FNR, 90, 0.5))
+    theta_SLL = np.append(np.arange(-90, -FN, 0.5), np.arange(FN, 90, 0.5))
     
     def errfun(dd):
         d_opt = d + dd
-        E_SLL = np.vectorize(lambda THETA:E_nusla(THETA, d_opt))(theta_SLL)
+        E_SLL = np.vectorize(lambda THETA:E_nusla(THETA, 0, d_opt))(theta_SLL)
         errSLL = np.max(E_SLL)
         # adjust number after less sign to change priority of BW over SLL
-        if E_nusla(FNR, d_opt) < FN_tolerance:
+        if E_nusla(FN, 0, d_opt) < FN_tolerance:
             errBW = 0
         else:
             errBW = 20
         return errSLL + errBW
     
     xopt, fopt = pso(errfun, [-0.2]*N, [0.2]*N, swarmsize=200, maxiter=300)
+    return (d, d + xopt)
+
+def plot_results(THETA0, d, dopt):
+    Ev = np.vectorize(lambda THETA:E_nusla(THETA, THETA0, d))(THETA_vec)
+    Ev_opt = np.vectorize(lambda THETA:E_nusla(THETA, THETA0, d_opt))(THETA_vec)
     
-    E0 = E_nusla(THETA0, d)
-    Ev = np.vectorize(lambda THETA:E_nusla(THETA, d))(THETA_vec)
-    Ev_opt = np.vectorize(lambda THETA:E_nusla(THETA, d+xopt))(THETA_vec)
-    return (THETA_vec, Ev, Ev_opt)
-
-THETA_vec, Ev, Ev_opt = NUSLA_SLR_opt(20, 0, 50, 0.2)
-
-def plot_results(THETA_vec, Ev, Ev_opt):
     fig = plt.figure()
     ax1 = plt.subplot(221)
     ax1.plot(THETA_vec, Ev, THETA_vec, Ev_opt)
@@ -84,6 +80,8 @@ def plot_results(THETA_vec, Ev, Ev_opt):
     ax4.set_thetamax(90)
     ax4.set_xticks(np.arange(-90, 90+1, 10)*q)
     ax4.set_ylim(-50,0)
-    
-plot_results(THETA_vec, Ev, Ev_opt)
+
+d, d_opt = NUSLA_SLR_opt(20, 50, 0.2)
+THETA0 = 0
+plot_results(THETA0, d, d_opt)
     
